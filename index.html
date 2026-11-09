@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MCQ Answer Sheet</title>
+  <style>
+    :root {
+      --ios-bg: #F2F2F7;
+      --ios-card: #FFFFFF;
+      --ios-blue: #007AFF;
+      --ios-blue-light: #EBF3FF;
+      --ios-red: #FF3B30;
+      --ios-gray-text: #8E8E93;
+      --ios-light-gray: #E5E5EA;
+      --ios-border: rgba(60, 60, 67, 0.12);
+      --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--ios-bg);
+      color: #000000;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background: var(--ios-bg);
+    }
+
+    /* iOS Navigation Bar */
+    .ios-navbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(242, 242, 247, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 0.5px solid var(--ios-border);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ios-title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.4px;
+    }
+
+    .ios-timer-badge {
+      font-variant-numeric: tabular-nums;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ios-blue);
+      background: var(--ios-card);
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 0.5px solid var(--ios-border);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .ios-timer-badge.urgent {
+      color: var(--ios-red);
+      background: #FFEBEA;
+    }
+
+    /* Screen Wrapper */
+    .screen {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      padding: 20px 16px;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    /* Inset Grouped Section */
+    .ios-section-header {
+      font-size: 13px;
+      text-transform: uppercase;
+      color: var(--ios-gray-text);
+      font-weight: 500;
+      margin: 16px 16px 8px 16px;
+      letter-spacing: -0.1px;
+    }
+
+    .ios-group {
+      background: var(--ios-card);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 0.5px solid var(--ios-border);
+      margin-bottom: 24px;
+    }
+
+    .ios-cell {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: var(--ios-card);
+      position: relative;
+    }
+
+    .ios-cell:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 16px;
+      right: 0;
+      bottom: 0;
+      height: 0.5px;
+      background: var(--ios-border);
+    }
+
+    .ios-label {
+      font-size: 16px;
+      color: #000;
+    }
+
+    .ios-input {
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 16px;
+      color: var(--ios-blue);
+      text-align: right;
+      width: 120px;
+      outline: none;
+      font-weight: 500;
+    }
+
+    .ios-input::placeholder {
+      color: #C7C7CC;
+    }
+
+    /* iOS Button */
+    .ios-btn {
+      background-color: var(--ios-blue);
+      color: white;
+      border: none;
+      font-family: inherit;
+      font-size: 17px;
+      font-weight: 600;
+      padding: 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .ios-btn:active {
+      opacity: 0.8;
+      transform: scale(0.985);
+    }
+
+    .ios-btn.secondary {
+      background-color: var(--ios-card);
+      color: var(--ios-blue);
+      border: 0.5px solid var(--ios-border);
+      box-shadow: none;
+      margin-top: 12px;
+    }
+
+    /* MCQ Sheet View */
+    .sheet-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .sheet-row {
+      background: var(--ios-card);
+      border-radius: 12px;
+      border: 0.5px solid var(--ios-border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .q-number {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1C1C1E;
+      width: 38px;
+    }
+
+    .options-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .bubble-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1.5px solid #C7C7CC;
+      background: transparent;
+      font-size: 15px;
+      font-weight: 600;
+      color: #3A3A3C;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.18s cubic-bezier(0.1, 1, 0.1, 1);
+    }
+
+    .bubble-btn:active {
+      transform: scale(0.9);
+    }
+
+    .bubble-btn.selected {
+      background: var(--ios-blue);
+      border-color: var(--ios-blue);
+      color: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(0, 122, 255, 0.35);
+    }
+
+    /* Result Grid View */
+    .result-summary {
+      background: var(--ios-card);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+      border: 0.5px solid var(--ios-border);
+      margin-bottom: 20px;
+    }
+
+    .summary-item .num {
+      font-size: 20px;
+      font-weight: 700;
+      color: #000;
+    }
+
+    .summary-item .label {
+      font-size: 12px;
+      color: var(--ios-gray-text);
+      margin-top: 2px;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .result-card {
+      background: var(--ios-card);
+      border-radius: 10px;
+      border: 0.5px solid var(--ios-border);
+      padding: 12px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .result-card .q-tag {
+      font-size: 12px;
+      color: var(--ios-gray-text);
+      font-weight: 500;
+    }
+
+    .result-card .ans-tag {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .result-card.answered .ans-tag {
+      background: var(--ios-blue);
+      color: #fff;
+    }
+
+    .result-card.blank .ans-tag {
+      background: var(--ios-light-gray);
+      color: #8E8E93;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- HOME SCREEN -->
+  <div id="homeScreen" class="screen active">
+    <div style="margin: 40px 16px 20px 16px;">
+      <h1 style="font-size: 32px; font-weight: 700; letter-spacing: -0.6px;">Answer Sheet</h1>
+      <p style="color: var(--ios-gray-text); font-size: 15px; margin-top: 4px;">Set parameters to start your test</p>
+    </div>
+
+    <div class="ios-section-header">Configuration</div>
+    <div class="ios-group">
+      <div class="ios-cell">
+        <span class="ios-label">Questions</span>
+        <input type="number" id="totalQuestions" class="ios-input" value="20" min="1" max="200" placeholder="e.g. 20">
+      </div>
+      <div class="ios-cell">
+        <span class="ios-label">Time (Minutes)</span>
+        <input type="number" id="examDuration" class="ios-input" value="15" min="1" max="180" placeholder="e.g. 15">
+      </div>
+    </div>
+
+    <div style="margin-top: auto; padding-bottom: 20px;">
+      <button class="ios-btn" onclick="startExam()">Start Test</button>
+    </div>
+  </div>
+
+  <!-- EXAM SCREEN -->
+  <div id="examScreen" class="screen">
+    <div class="ios-navbar" style="margin: -20px -16px 16px -16px;">
+      <span class="ios-title">OMR Sheet</span>
+      <span id="timerDisplay" class="ios-timer-badge">00:00</span>
+    </div>
+
+    <div id="sheetContainer" class="sheet-list"></div>
+
+    <div style="margin-top: 10px; padding-bottom: 30px;">
+      <button class="ios-btn" onclick="submitExam()">Submit Test</button>
+    </div>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div id="resultScreen" class="screen">
+    <div class="ios-navbar" style="margin: -20px -16px 16px -16px;">
+      <span class="ios-title">Submitted Answers</span>
+    </div>
+
+    <div class="result-summary">
+      <div class="summary-item">
+        <div class="num" id="statTotal">0</div>
+        <div class="label">Total</div>
+      </div>
+      <div class="summary-item">
+        <div class="num" style="color: var(--ios-blue);" id="statAnswered">0</div>
+        <div class="label">Answered</div>
+      </div>
+      <div class="summary-item">
+        <div class="num" style="color: var(--ios-gray-text);" id="statBlank">0</div>
+        <div class="label">Blank</div>
+      </div>
+    </div>
+
+    <div class="ios-section-header">Grid Overview</div>
+    <div id="resultGrid" class="result-grid"></div>
+
+    <div style="margin-top: auto; padding-bottom: 20px;">
+      <button class="ios-btn secondary" onclick="resetToHome()">Take Another Test</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let userAnswers = {};
+  let totalCount = 0;
+  let timerInterval = null;
+  let remainingSeconds = 0;
+
+  function switchScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  function startExam() {
+    const qInput = parseInt(document.getElementById('totalQuestions').value, 10);
+    const timeInput = parseInt(document.getElementById('examDuration').value, 10);
+
+    if (isNaN(qInput) || qInput <= 0) {
+      alert("Please enter a valid number of questions.");
+      return;
+    }
+    if (isNaN(timeInput) || timeInput <= 0) {
+      alert("Please enter a valid time in minutes.");
+      return;
+    }
+
+    totalCount = qInput;
+    userAnswers = {};
+
+    buildSheet(totalCount);
+    startTimer(timeInput * 60);
+    switchScreen('examScreen');
+  }
+
+  function buildSheet(count) {
+    const container = document.getElementById('sheetContainer');
+    container.innerHTML = '';
+    const options = ['A', 'B', 'C', 'D'];
+
+    for (let i = 1; i <= count; i++) {
+      const row = document.createElement('div');
+      row.className = 'sheet-row';
+
+      const qNum = document.createElement('div');
+      qNum.className = 'q-number';
+      qNum.textContent = i;
+
+      const optsGroup = document.createElement('div');
+      optsGroup.className = 'options-group';
+
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'bubble-btn';
+        btn.textContent = opt;
+        btn.id = `btn-${i}-${opt}`;
+        btn.onclick = () => selectOption(i, opt);
+        optsGroup.appendChild(btn);
+      });
+
+      row.appendChild(qNum);
+      row.appendChild(optsGroup);
+      container.appendChild(row);
+    }
+  }
+
+  function selectOption(qIndex, option) {
+    const prevSelected = userAnswers[qIndex];
+
+    // If tapping already selected, unselect it (toggle)
+    if (prevSelected === option) {
+      delete userAnswers[qIndex];
+      document.getElementById(`btn-${qIndex}-${option}`).classList.remove('selected');
+      return;
+    }
+
+    // Clear previous selection for this row if any
+    if (prevSelected) {
+      document.getElementById(`btn-${qIndex}-${prevSelected}`).classList.remove('selected');
+    }
+
+    // Set new selection
+    userAnswers[qIndex] = option;
+    document.getElementById(`btn-${qIndex}-${option}`).classList.add('selected');
+  }
+
+  function startTimer(duration) {
+    remainingSeconds = duration;
+    updateTimerDisplay();
+
+    timerInterval = setInterval(() => {
+      remainingSeconds--;
+      updateTimerDisplay();
+
+      if (remainingSeconds <= 0) {
+        clearInterval(timerInterval);
+        alert("Time is up! Submitting your answers.");
+        submitExam();
+      }
+    }, 1000);
+  }
+
+  function updateTimerDisplay() {
+    const display = document.getElementById('timerDisplay');
+    const mins = Math.floor(remainingSeconds / 60);
+    const secs = remainingSeconds % 60;
+    display.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+    if (remainingSeconds <= 60) {
+      display.classList.add('urgent');
+    } else {
+      display.classList.remove('urgent');
+    }
+  }
+
+  function submitExam() {
+    if (timerInterval) clearInterval(timerInterval);
+    renderResults();
+    switchScreen('resultScreen');
+  }
+
+  function renderResults() {
+    const grid = document.getElementById('resultGrid');
+    grid.innerHTML = '';
+
+    let answeredCount = 0;
+
+    for (let i = 1; i <= totalCount; i++) {
+      const selected = userAnswers[i];
+      const isAnswered = Boolean(selected);
+      if (isAnswered) answeredCount++;
+
+      const card = document.createElement('div');
+      card.className = `result-card ${isAnswered ? 'answered' : 'blank'}`;
+
+      card.innerHTML = `
+        <span class="q-tag">Q${i}</span>
+        <span class="ans-tag">${isAnswered ? selected : '—'}</span>
+      `;
+
+      grid.appendChild(card);
+    }
+
+    // Update summary statistics
+    document.getElementById('statTotal').textContent = totalCount;
+    document.getElementById('statAnswered').textContent = answeredCount;
+    document.getElementById('statBlank').textContent = totalCount - answeredCount;
+  }
+
+  function resetToHome() {
+    if (timerInterval) clearInterval(timerInterval);
+    userAnswers = {};
+    switchScreen('homeScreen');
+  }
+</script>
+
+</body>
+</html>
