@@ -1,761 +1,363 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stateless OMR Web App</title>
-  <style>
-    :root {
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --border: #e2e8f0;
-      --correct: #16a34a;
-      --wrong: #dc2626;
-      --missed: #ea580c;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMR Exam Platform</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --text: #0f172a;
+            --bubble-size: 32px;
+        }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        /* Teacher Setup Styles */
+        #teacherSetup, #teacherKeySetup {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label { font-weight: bold; margin-bottom: 5px; }
+        .form-group input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 1rem; }
+        
+        .btn {
+            padding: 12px 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn:hover { background-color: #1d4ed8; }
+        .btn-success { background-color: #16a34a; }
+        .btn-success:hover { background-color: #15803d; }
+        
+        #linkContainer {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: #dbeafe;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            word-break: break-all;
+        }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    }
-
-    body {
-      background-color: var(--bg);
-      color: var(--text-main);
-      padding: 24px 16px;
-      display: flex;
-      justify-content: center;
-      min-height: 100vh;
-    }
-
-    .app-container {
-      width: 100%;
-      max-width: 820px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    /* Top Navigation / Status Header */
-    .app-header {
-      background: var(--card-bg);
-      padding: 16px 24px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-
-    .app-brand h1 {
-      font-size: 20px;
-      font-weight: 700;
-    }
-
-    .badge {
-      display: inline-block;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 999px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .badge-teacher {
-      background: #eff6ff;
-      color: var(--primary);
-    }
-
-    .badge-student {
-      background: #f0fdf4;
-      color: var(--correct);
-    }
-
-    .timer-display {
-      font-variant-numeric: tabular-nums;
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--primary);
-      background: #f1f5f9;
-      padding: 6px 14px;
-      border-radius: 8px;
-    }
-
-    .timer-display.urgent {
-      background: #fef2f2;
-      color: var(--wrong);
-      animation: pulse 1s infinite alternate;
-    }
-
-    @keyframes pulse {
-      from { opacity: 1; }
-      to { opacity: 0.6; }
-    }
-
-    /* Common Card Styling */
-    .card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      padding: 20px 24px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    }
-
-    .card-title {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 16px;
-    }
-
-    /* Setup Form Grid */
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .form-group label {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-muted);
-    }
-
-    .form-group input, .form-group select {
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      font-size: 15px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .form-group input:focus, .form-group select:focus {
-      border-color: var(--primary);
-    }
-
-    /* Action Buttons */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--primary);
-      color: #fff;
-      font-weight: 600;
-      font-size: 15px;
-      padding: 12px 20px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.15s ease, transform 0.05s ease;
-      width: 100%;
-    }
-
-    .btn:hover { background: var(--primary-hover); }
-    .btn:active { transform: scale(0.99); }
-    .btn:disabled {
-      background: #cbd5e1;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    /* Share Link Box */
-    .share-box {
-      margin-top: 16px;
-      background: #f8fafc;
-      padding: 14px;
-      border-radius: 8px;
-      border: 1px dashed var(--border);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .share-input-group {
-      display: flex;
-      gap: 8px;
-    }
-
-    .share-input-group input {
-      flex: 1;
-      padding: 8px 12px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      font-size: 13px;
-      background: #fff;
-    }
-
-    .share-input-group button {
-      width: auto;
-      padding: 8px 16px;
-      font-size: 13px;
-    }
-
-    /* OMR Sheet Rows */
-    .omr-container {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .omr-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 16px;
-      border-radius: 8px;
-      background: #ffffff;
-      border: 1px solid var(--border);
-    }
-
-    .omr-q-num {
-      font-weight: 600;
-      font-size: 15px;
-      width: 48px;
-      color: var(--text-muted);
-    }
-
-    .omr-bubbles {
-      display: flex;
-      gap: 12px;
-    }
-
-    .bubble {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      border: 2px solid #cbd5e1;
-      background: #ffffff;
-      color: var(--text-main);
-      font-size: 14px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .bubble:hover:not(.locked) {
-      border-color: var(--primary);
-    }
-
-    .bubble.selected {
-      background: var(--primary);
-      border-color: var(--primary);
-      color: #ffffff;
-    }
-
-    /* Grading Highlights */
-    .bubble.correct {
-      background: var(--correct) !important;
-      border-color: var(--correct) !important;
-      color: #ffffff !important;
-    }
-
-    .bubble.wrong {
-      background: var(--wrong) !important;
-      border-color: var(--wrong) !important;
-      color: #ffffff !important;
-    }
-
-    .bubble.key-missed {
-      border: 2px dashed var(--correct) !important;
-      color: var(--correct) !important;
-      background: #f0fdf4 !important;
-    }
-
-    .bubble.locked {
-      cursor: default;
-    }
-
-    /* Score Board (Grading Results) */
-    .scoreboard {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .stat-card {
-      background: #f8fafc;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      text-align: center;
-    }
-
-    .stat-val {
-      font-size: 22px;
-      font-weight: 700;
-    }
-
-    .stat-label {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    /* Utility */
-    .hidden {
-      display: none !important;
-    }
-  </style>
+        /* Exam Styles */
+        #examView { display: none; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+        }
+        .timer { font-size: 1.25rem; font-weight: bold; color: #dc2626; }
+        .omr-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .question-row { display: flex; align-items: center; gap: 10px; }
+        .q-number { font-weight: bold; width: 30px; text-align: right; }
+        .bubbles { display: flex; gap: 8px; }
+        .bubble {
+            width: var(--bubble-size);
+            height: var(--bubble-size);
+            border-radius: 50%;
+            border: 2px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            cursor: pointer;
+            user-select: none;
+        }
+        .bubble.selected { background-color: var(--primary); border-color: var(--primary); color: white; }
+        .bubble.correct { background-color: #16a34a; border-color: #16a34a; color: white; }
+        .bubble.wrong { background-color: #dc2626; border-color: #dc2626; color: white; }
+        
+        #result {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            font-size: 1.1rem;
+        }
+    </style>
 </head>
 <body>
 
-  <div class="app-container">
-    <!-- Header -->
-    <header class="app-header">
-      <div class="app-brand">
-        <h1>Stateless OMR</h1>
-        <span id="modeBadge" class="badge badge-teacher">Teacher Mode</span>
-      </div>
-      <div id="timerContainer" class="timer-display hidden">00:00</div>
-    </header>
-
-    <!-- Teacher Config Form -->
-    <section id="teacherSetupCard" class="card">
-      <h2 class="card-title">Exam Configuration</h2>
-      <div class="form-grid">
+    <!-- TEACHER MODE: Setup Initial Config -->
+    <div id="teacherSetup">
+        <h2>👨‍🏫 Teacher Mode: Create Exam Link</h2>
+        <p>Set your exam parameters here. (Students won't see this screen).</p>
         <div class="form-group">
-          <label for="inputTotalQ">Total Questions</label>
-          <input type="number" id="inputTotalQ" value="10" min="1" max="100">
+            <label>Total Questions</label>
+            <input type="number" id="t-questions" value="20" min="1">
         </div>
         <div class="form-group">
-          <label for="inputDuration">Time Limit (Mins)</label>
-          <input type="number" id="inputDuration" value="10" min="1" max="180">
+            <label>Time (Minutes)</label>
+            <input type="number" id="t-time" value="15" min="1">
         </div>
         <div class="form-group">
-          <label for="inputOptions">Options Per Q</label>
-          <select id="inputOptions">
-            <option value="4" selected>4 (A, B, C, D)</option>
-            <option value="5">5 (A, B, C, D, E)</option>
-          </select>
+            <label>Number of Options per Question</label>
+            <input type="number" id="t-options" value="4" min="2" max="6">
         </div>
         <div class="form-group">
-          <label for="inputNegative">Negative Mark</label>
-          <input type="number" id="inputNegative" value="0.25" min="0" max="2" step="0.05">
+            <label>Negative Mark (e.g., 0.25 or 0)</label>
+            <input type="number" id="t-negative" value="0" step="0.01" min="0">
         </div>
-      </div>
-      <button id="btnInitKey" class="btn" type="button">Create Answer Key</button>
+        <button class="btn" onclick="startKeySetup()">Next: Set Answer Key</button>
+    </div>
 
-      <!-- Share Box (Hidden until key generation) -->
-      <div id="shareBox" class="share-box hidden">
-        <p style="font-size: 13px; font-weight: 600;">Shareable Exam Link:</p>
-        <div class="share-input-group">
-          <input type="text" id="shareUrlInput" readonly>
-          <button id="btnCopyUrl" class="btn" type="button">Copy Link</button>
+    <!-- TEACHER MODE: Tap Correct Answers -->
+    <div id="teacherKeySetup" style="display: none;">
+        <h2>Tap the CORRECT answers</h2>
+        <p>This builds the answer key for the system.</p>
+        <div id="teacherOmrContainer" class="omr-grid"></div>
+        <button class="btn btn-success" onclick="generateStudentLink()">Generate Link for Students</button>
+        
+        <div id="linkContainer">
+            <p><strong>Copy this link and send it to your students:</strong></p>
+            <textarea id="studentLink" rows="4" style="width: 100%; padding:10px; margin-bottom:10px;" readonly></textarea>
+            <button class="btn" onclick="copyLink()">📋 Copy Link</button>
         </div>
-      </div>
-    </section>
+    </div>
 
-    <!-- Scorecard (Student Result Mode) -->
-    <section id="scorecardCard" class="card hidden">
-      <h2 class="card-title">Exam Evaluation</h2>
-      <div class="scoreboard">
-        <div class="stat-card">
-          <div id="resScore" class="stat-val" style="color: var(--primary);">0</div>
-          <div class="stat-label">Final Score</div>
+    <!-- STUDENT MODE: Taking the Exam -->
+    <div id="examView">
+        <div class="header">
+            <h2>Exam OMR</h2>
+            <div class="timer" id="timerDisplay">00:00</div>
         </div>
-        <div class="stat-card">
-          <div id="resCorrect" class="stat-val" style="color: var(--correct);">0</div>
-          <div class="stat-label">Correct</div>
-        </div>
-        <div class="stat-card">
-          <div id="resWrong" class="stat-val" style="color: var(--wrong);">0</div>
-          <div class="stat-label">Wrong</div>
-        </div>
-        <div class="stat-card">
-          <div id="resUnanswered" class="stat-val" style="color: var(--text-muted);">0</div>
-          <div class="stat-label">Unanswered</div>
-        </div>
-      </div>
-    </section>
+        <div id="studentOmrContainer" class="omr-grid"></div>
+        <button class="btn btn-success" id="submitBtn" onclick="submitExam()">Submit Exam</button>
+        <div id="result"></div>
+    </div>
 
-    <!-- OMR Sheet Display -->
-    <main id="omrCard" class="card hidden">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
-        <h2 id="omrTitle" class="card-title" style="margin-bottom:0;">OMR Sheet</h2>
-        <span id="omrSubtitle" style="font-size: 13px; color: var(--text-muted);"></span>
-      </div>
-      <div id="omrSheet" class="omr-container">
-        <!-- Rendered dynamically -->
-      </div>
-      <div style="margin-top: 20px;">
-        <button id="btnOmrAction" class="btn" type="button">Submit Exam</button>
-      </div>
-    </main>
-  </div>
+    <script>
+        const alphabet = ['A', 'B', 'C', 'D', 'E', 'F'];
+        let config = {};
+        let teacherAnswers = {};
+        let studentAnswers = {};
+        let timerInterval;
 
-  <script>
-    // --- GLOBAL STATE ---
-    const state = {
-      mode: 'teacher', // 'teacher' | 'student' | 'graded'
-      config: {
-        totalQuestions: 10,
-        timeLimitMins: 10,
-        optionsCount: 4,
-        negativeMark: 0.25,
-        answerKey: {} // { 1: 'A', 2: 'C', ... }
-      },
-      studentAnswers: {}, // { 1: 'B', ... }
-      timerInterval: null,
-      timeRemainingSec: 0
-    };
+        // --- INIT ROUTING ---
+        window.onload = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const examData = urlParams.get('exam');
 
-    // --- DOM REFERENCES ---
-    const dom = {
-      modeBadge: document.getElementById('modeBadge'),
-      timerContainer: document.getElementById('timerContainer'),
-      teacherSetupCard: document.getElementById('teacherSetupCard'),
-      inputTotalQ: document.getElementById('inputTotalQ'),
-      inputDuration: document.getElementById('inputDuration'),
-      inputOptions: document.getElementById('inputOptions'),
-      inputNegative: document.getElementById('inputNegative'),
-      btnInitKey: document.getElementById('btnInitKey'),
-      shareBox: document.getElementById('shareBox'),
-      shareUrlInput: document.getElementById('shareUrlInput'),
-      btnCopyUrl: document.getElementById('btnCopyUrl'),
-      scorecardCard: document.getElementById('scorecardCard'),
-      resScore: document.getElementById('resScore'),
-      resCorrect: document.getElementById('resCorrect'),
-      resWrong: document.getElementById('resWrong'),
-      resUnanswered: document.getElementById('resUnanswered'),
-      omrCard: document.getElementById('omrCard'),
-      omrTitle: document.getElementById('omrTitle'),
-      omrSubtitle: document.getElementById('omrSubtitle'),
-      omrSheet: document.getElementById('omrSheet'),
-      btnOmrAction: document.getElementById('btnOmrAction')
-    };
-
-    // [PLACEHOLDER 1: TEACHER SETUP LOGIC]
-    function handleCreateAnswerKey() {
-      const totalQ = parseInt(dom.inputTotalQ.value, 10);
-      const duration = parseInt(dom.inputDuration.value, 10);
-      const options = parseInt(dom.inputOptions.value, 10);
-      const negative = parseFloat(dom.inputNegative.value);
-
-      if (isNaN(totalQ) || totalQ <= 0 || isNaN(duration) || duration <= 0) {
-        alert('Please provide valid positive numbers for questions and duration.');
-        return;
-      }
-
-      state.config.totalQuestions = totalQ;
-      state.config.timeLimitMins = duration;
-      state.config.optionsCount = options;
-      state.config.negativeMark = isNaN(negative) ? 0 : Math.abs(negative);
-      state.config.answerKey = {};
-
-      // Prepare UI for key marking
-      dom.omrTitle.textContent = 'Set Correct Answer Key';
-      dom.omrSubtitle.textContent = 'Tap the correct bubble for each question';
-      dom.omrCard.classList.remove('hidden');
-
-      dom.btnOmrAction.textContent = 'Generate Exam Link';
-      dom.btnOmrAction.onclick = handleGenerateExamUrl;
-
-      // Render interactive sheet for the teacher
-      renderOMRSheet(
-        state.config.totalQuestions,
-        state.config.optionsCount,
-        true,
-        (qNum, option) => {
-          // Toggle or assign answer key
-          if (state.config.answerKey[qNum] === option) {
-            delete state.config.answerKey[qNum];
-            return false; // indicates unselected
-          } else {
-            state.config.answerKey[qNum] = option;
-            return true; // indicates selected
-          }
-        }
-      );
-
-      dom.omrCard.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function handleGenerateExamUrl() {
-      const answeredKeysCount = Object.keys(state.config.answerKey).length;
-      if (answeredKeysCount < state.config.totalQuestions) {
-        const proceed = confirm(
-          `You only marked ${answeredKeysCount} out of ${state.config.totalQuestions} questions. Do you want to proceed with unselected questions having no correct answer?`
-        );
-        if (!proceed) return;
-      }
-
-      // Encode payload to UTF-8 safe Base64
-      const jsonStr = JSON.stringify(state.config);
-      const base64Config = btoa(encodeURIComponent(jsonStr));
-
-      // Construct clean URL
-      const examUrl = `${window.location.origin}${window.location.pathname}?exam=${base64Config}`;
-      dom.shareUrlInput.value = examUrl;
-      dom.shareBox.classList.remove('hidden');
-
-      dom.shareBox.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function handleCopyShareUrl() {
-      if (!dom.shareUrlInput.value) return;
-
-      navigator.clipboard.writeText(dom.shareUrlInput.value).then(() => {
-        const origText = dom.btnCopyUrl.textContent;
-        dom.btnCopyUrl.textContent = 'Copied!';
-        dom.btnCopyUrl.style.backgroundColor = 'var(--correct)';
-        setTimeout(() => {
-          dom.btnCopyUrl.textContent = origText;
-          dom.btnCopyUrl.style.backgroundColor = '';
-        }, 1800);
-      }).catch(() => {
-        dom.shareUrlInput.select();
-        document.execCommand('copy');
-        alert('Link copied to clipboard!');
-      });
-    }
-
-    // [PLACEHOLDER 2: OMR GENERATOR]
-    function renderOMRSheet(totalQuestions, optionsCount, isInteractive, onBubbleClick) {
-      dom.omrSheet.innerHTML = '';
-      const letters = ['A', 'B', 'C', 'D', 'E'].slice(0, optionsCount);
-
-      for (let i = 1; i <= totalQuestions; i++) {
-        const row = document.createElement('div');
-        row.className = 'omr-row';
-        row.dataset.q = i;
-
-        const qNum = document.createElement('span');
-        qNum.className = 'omr-q-num';
-        qNum.textContent = `Q${i}`;
-
-        const bubblesGroup = document.createElement('div');
-        bubblesGroup.className = 'omr-bubbles';
-
-        letters.forEach(opt => {
-          const bubble = document.createElement('button');
-          bubble.type = 'button';
-          bubble.className = 'bubble';
-          bubble.textContent = opt;
-          bubble.dataset.opt = opt;
-
-          if (!isInteractive) {
-            bubble.classList.add('locked');
-          } else {
-            bubble.addEventListener('click', () => {
-              const isSelected = onBubbleClick(i, opt);
-
-              // Clear selection state across this question's bubbles
-              const siblingBubbles = bubblesGroup.querySelectorAll('.bubble');
-              siblingBubbles.forEach(b => b.classList.remove('selected'));
-
-              // Highlight the clicked bubble if selected
-              if (isSelected) {
-                bubble.classList.add('selected');
-              }
-            });
-          }
-
-          bubblesGroup.appendChild(bubble);
-        });
-
-        row.appendChild(qNum);
-        row.appendChild(bubblesGroup);
-        dom.omrSheet.appendChild(row);
-      }
-    }
-
-    // [PLACEHOLDER 3: STUDENT EXAM & TIMER]
-    function initStudentMode(encodedConfig) {
-      try {
-        const decodedJson = decodeURIComponent(atob(encodedConfig));
-        const parsedConfig = JSON.parse(decodedJson);
-
-        state.mode = 'student';
-        state.config = parsedConfig;
-        state.studentAnswers = {};
-
-        // Adapt UI for Student
-        dom.teacherSetupCard.classList.add('hidden');
-        dom.modeBadge.textContent = 'Student Mode';
-        dom.modeBadge.className = 'badge badge-student';
-
-        dom.timerContainer.classList.remove('hidden');
-        dom.omrTitle.textContent = 'Candidate Answer Sheet';
-        dom.omrSubtitle.textContent = `Negative marking: -${state.config.negativeMark} per incorrect response`;
-        dom.omrCard.classList.remove('hidden');
-
-        dom.btnOmrAction.textContent = 'Submit Exam';
-        dom.btnOmrAction.onclick = handleExamSubmit;
-
-        // Render interactive sheet for student
-        renderOMRSheet(
-          state.config.totalQuestions,
-          state.config.optionsCount,
-          true,
-          (qNum, option) => {
-            // Select or toggle student answer
-            if (state.studentAnswers[qNum] === option) {
-              delete state.studentAnswers[qNum];
-              return false;
+            if (examData) {
+                // If link has data, open Student Mode
+                document.getElementById('teacherSetup').style.display = 'none';
+                document.getElementById('examView').style.display = 'block';
+                
+                // Decode the data from URL
+                config = JSON.parse(atob(examData)); 
+                generateOMR('studentOmrContainer', true);
+                startTimer();
             } else {
-              state.studentAnswers[qNum] = option;
-              return true;
+                // No data, stay in Teacher Mode
+                document.getElementById('teacherSetup').style.display = 'block';
             }
-          }
-        );
+        };
 
-        // Start countdown timer
-        startTimer(state.config.timeLimitMins * 60);
-
-      } catch (err) {
-        alert('Invalid or corrupted exam link. Please contact your instructor.');
-        console.error(err);
-      }
-    }
-
-    function startTimer(durationSeconds) {
-      state.timeRemainingSec = durationSeconds;
-      updateTimerDisplay();
-
-      if (state.timerInterval) clearInterval(state.timerInterval);
-
-      state.timerInterval = setInterval(() => {
-        state.timeRemainingSec--;
-        updateTimerDisplay();
-
-        if (state.timeRemainingSec <= 0) {
-          clearInterval(state.timerInterval);
-          alert('Time has expired! Submitting your exam automatically.');
-          handleExamSubmit();
+        // --- TEACHER LOGIC ---
+        function startKeySetup() {
+            config = {
+                q: parseInt(document.getElementById('t-questions').value),
+                t: parseInt(document.getElementById('t-time').value),
+                o: parseInt(document.getElementById('t-options').value),
+                n: parseFloat(document.getElementById('t-negative').value)
+            };
+            
+            document.getElementById('teacherSetup').style.display = 'none';
+            document.getElementById('teacherKeySetup').style.display = 'block';
+            
+            generateOMR('teacherOmrContainer', false);
         }
-      }, 1000);
-    }
 
-    function updateTimerDisplay() {
-      const minutes = Math.floor(Math.max(0, state.timeRemainingSec) / 60);
-      const seconds = Math.max(0, state.timeRemainingSec) % 60;
-      
-      dom.timerContainer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
-      if (state.timeRemainingSec <= 60) {
-        dom.timerContainer.classList.add('urgent');
-      } else {
-        dom.timerContainer.classList.remove('urgent');
-      }
-    }
-
-    // [PLACEHOLDER 4: SUBMIT & GRADING]
-    function handleExamSubmit() {
-      if (state.timeRemainingSec > 0) {
-        const confirmSubmit = confirm('Are you sure you want to finalize and submit your exam?');
-        if (!confirmSubmit) return;
-      }
-
-      // Stop the timer
-      if (state.timerInterval) clearInterval(state.timerInterval);
-
-      // Disable submission button & lock inputs
-      dom.btnOmrAction.disabled = true;
-      dom.btnOmrAction.textContent = 'Exam Evaluated';
-
-      // Lock all bubbles so no further changes can occur
-      const allBubbles = dom.omrSheet.querySelectorAll('.bubble');
-      allBubbles.forEach(b => {
-        b.classList.add('locked');
-        b.style.pointerEvents = 'none';
-      });
-
-      // Grade the sheet and update UI
-      evaluateResults();
-
-      // Reveal scorecard and scroll into view
-      dom.scorecardCard.classList.remove('hidden');
-      dom.scorecardCard.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function evaluateResults() {
-      let correctCount = 0;
-      let wrongCount = 0;
-      let unansweredCount = 0;
-
-      for (let i = 1; i <= state.config.totalQuestions; i++) {
-        const keyOpt = state.config.answerKey[i];
-        const studentOpt = state.studentAnswers[i];
-        const row = dom.omrSheet.querySelector(`.omr-row[data-q="${i}"]`);
-
-        if (!row) continue;
-
-        if (studentOpt) {
-          const studentBubble = row.querySelector(`.bubble[data-opt="${studentOpt}"]`);
-
-          if (keyOpt && studentOpt === keyOpt) {
-            // Correct choice
-            correctCount++;
-            studentBubble.classList.remove('selected');
-            studentBubble.classList.add('correct');
-          } else {
-            // Incorrect choice
-            wrongCount++;
-            studentBubble.classList.remove('selected');
-            studentBubble.classList.add('wrong');
-
-            // Indicate correct key so candidate sees the right answer
-            if (keyOpt) {
-              const keyBubble = row.querySelector(`.bubble[data-opt="${keyOpt}"]`);
-              if (keyBubble) keyBubble.classList.add('key-missed');
+        function generateStudentLink() {
+            // Verify teacher answered all questions for the key
+            let keyArray = [];
+            for (let i = 1; i <= config.q; i++) {
+                if (!teacherAnswers[i]) {
+                    alert(`Please select the correct answer for question ${i}`);
+                    return;
+                }
+                keyArray.push(teacherAnswers[i]);
             }
-          }
-        } else {
-          // Unanswered
-          unansweredCount++;
-          if (keyOpt) {
-            const keyBubble = row.querySelector(`.bubble[data-opt="${keyOpt}"]`);
-            if (keyBubble) keyBubble.classList.add('key-missed');
-          }
+            
+            config.k = keyArray.join(''); // e.g. "ABCD..."
+            
+            // Encode the configuration into a Base64 string
+            const encodedConfig = btoa(JSON.stringify(config));
+            const baseUrl = window.location.href.split('?')[0];
+            const finalUrl = `${baseUrl}?exam=${encodedConfig}`;
+            
+            document.getElementById('linkContainer').style.display = 'block';
+            document.getElementById('studentLink').value = finalUrl;
         }
-      }
 
-      // Calculate final score with penalty
-      const penalty = wrongCount * state.config.negativeMark;
-      const rawScore = (correctCount * 1) - penalty;
-      const finalScore = Number(rawScore.toFixed(2));
+        function copyLink() {
+            const linkText = document.getElementById('studentLink');
+            linkText.select();
+            document.execCommand("copy");
+            alert("Link copied! Send it to your students.");
+        }
 
-      // Update scorecard UI
-      dom.resScore.textContent = finalScore;
-      dom.resCorrect.textContent = correctCount;
-      dom.resWrong.textContent = wrongCount;
-      dom.resUnanswered.textContent = unansweredCount;
-    }
+        // --- SHARED OMR GENERATOR ---
+        function generateOMR(containerId, isStudent) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = ''; // clear previous
+            
+            for (let i = 1; i <= config.q; i++) {
+                const row = document.createElement('div');
+                row.className = 'question-row';
+                row.id = `q-row-${i}`;
+                
+                const qNum = document.createElement('div');
+                qNum.className = 'q-number';
+                qNum.textContent = i + '.';
+                
+                const bubblesContainer = document.createElement('div');
+                bubblesContainer.className = 'bubbles';
+                
+                for (let j = 0; j < config.o; j++) {
+                    const optionLetter = alphabet[j];
+                    const bubble = document.createElement('div');
+                    bubble.className = 'bubble';
+                    bubble.textContent = optionLetter;
+                    bubble.id = `q${i}-${optionLetter}`;
+                    
+                    bubble.onclick = (e) => {
+                        if (isStudent && !timerInterval) return; // Prevent clicks after submit
+                        
+                        // Deselect others in row
+                        const bubbles = bubblesContainer.getElementsByClassName('bubble');
+                        Array.from(bubbles).forEach(b => b.classList.remove('selected'));
+                        
+                        // Select clicked
+                        e.target.classList.add('selected');
+                        
+                        // Save to respective object
+                        if (isStudent) studentAnswers[i] = optionLetter;
+                        else teacherAnswers[i] = optionLetter;
+                    };
+                    bubblesContainer.appendChild(bubble);
+                }
+                row.appendChild(qNum);
+                row.appendChild(bubblesContainer);
+                container.appendChild(row);
+            }
+        }
 
-    // --- INITIALIZATION ---
-    window.addEventListener('DOMContentLoaded', () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const examData = urlParams.get('exam');
+        // --- STUDENT LOGIC ---
+        function startTimer() {
+            let timeLeft = config.t * 60;
+            const display = document.getElementById('timerDisplay');
+            
+            timerInterval = setInterval(() => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                
+                display.textContent = 
+                    (minutes < 10 ? "0" + minutes : minutes) + ":" + 
+                    (seconds < 10 ? "0" + seconds : seconds);
+                
+                if (timeLeft <= 0) {
+                    submitExam();
+                } else {
+                    timeLeft--;
+                }
+            }, 1000);
+        }
 
-      if (examData) {
-        initStudentMode(examData);
-      } else {
-        // Teacher Mode: Attach primary setup event listeners
-        dom.btnInitKey.addEventListener('click', handleCreateAnswerKey);
-        dom.btnCopyUrl.addEventListener('click', handleCopyShareUrl);
-      }
-    });
-  </script>
+        function submitExam() {
+            clearInterval(timerInterval);
+            timerInterval = null; // Stops bubbles from being clicked
+            
+            let correct = 0;
+            let wrong = 0;
+            let unattempted = 0;
+            const keyArray = config.k.split('');
+
+            // Calculate and show right/wrong on the bubbles
+            for (let i = 1; i <= config.q; i++) {
+                const studentAns = studentAnswers[i];
+                const correctAns = keyArray[i - 1];
+
+                // Highlight the correct answer in green unconditionally for teacher review
+                document.getElementById(`q${i}-${correctAns}`).classList.add('correct');
+
+                if (!studentAns) {
+                    unattempted++;
+                } else if (studentAns === correctAns) {
+                    correct++;
+                } else {
+                    wrong++;
+                    // Highlight student's wrong answer in red
+                    document.getElementById(`q${i}-${studentAns}`).classList.add('wrong');
+                }
+            }
+
+            const totalScore = (correct * 1) - (wrong * config.n);
+            
+            // UI Updates
+            document.getElementById('submitBtn').style.display = 'none';
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            
+            resultDiv.innerHTML = `
+                <h3 style="color:#16a34a; text-align:center; margin-top:0;">Exam Completed!</h3>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span>✅ Correct: <strong>${correct}</strong></span>
+                    <span>❌ Wrong: <strong>${wrong}</strong></span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span>➖ Unattempted: <strong>${unattempted}</strong></span>
+                    <span>📉 Negative Penalty: <strong>-${(wrong * config.n).toFixed(2)}</strong></span>
+                </div>
+                <hr style="border-color:#e2e8f0; margin:15px 0;">
+                <h2 style="text-align:center; margin:0;">Final Score: ${totalScore.toFixed(2)} / ${config.q}</h2>
+                <p style="text-align:center; font-size:0.9rem; color:#64748b; margin-top:15px;">
+                    Review your answers above. <span style="color:#16a34a;">Green</span> is the correct answer. <span style="color:#dc2626;">Red</span> is your incorrect selection.
+                </p>
+            `;
+            
+            window.scrollTo(0,0);
+        }
+    </script>
 </body>
 </html>
